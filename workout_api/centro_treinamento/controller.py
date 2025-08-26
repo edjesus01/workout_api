@@ -11,52 +11,50 @@ router = APIRouter()
 
 @router.post(
     '/', 
-    summary='Criar um novo Centro de treinamento',
+    summary='Criar um novo Centro de Treinamento',
     status_code=status.HTTP_201_CREATED,
     response_model=CentroTreinamentoOut,
 )
 async def post(
     db_session: DatabaseDependency, 
-    centro_treinamento_in: CentroTreinamentoIn = Body(...)
+    ct_in: CentroTreinamentoIn = Body(...)
 ) -> CentroTreinamentoOut:
-    centro_treinamento_out = CentroTreinamentoOut(id=uuid4(), **centro_treinamento_in.model_dump())
-    centro_treinamento_model = CentroTreinamentoModel(**centro_treinamento_out.model_dump())
+    ct_out = CentroTreinamentoOut(id=uuid4(), **ct_in.model_dump())
+    ct_model = CentroTreinamentoModel(**ct_out.model_dump())
     
-    db_session.add(centro_treinamento_model)
+    db_session.add(ct_model)
     await db_session.commit()
 
-    return centro_treinamento_out
+    return ct_out
     
     
 @router.get(
     '/', 
-    summary='Consultar todos os centros de treinamento',
+    summary='Consultar todos os Centros de Treinamento',
     status_code=status.HTTP_200_OK,
     response_model=list[CentroTreinamentoOut],
 )
 async def query(db_session: DatabaseDependency) -> list[CentroTreinamentoOut]:
-    centros_treinamento_out: list[CentroTreinamentoOut] = (
-        await db_session.execute(select(CentroTreinamentoModel))
-    ).scalars().all()
+    cts: list[CentroTreinamentoOut] = (await db_session.execute(select(CentroTreinamentoModel))).scalars().all()
     
-    return centros_treinamento_out
+    return cts
 
 
 @router.get(
     '/{id}', 
-    summary='Consulta um centro de treinamento pelo id',
+    summary='Consultar um Centro de Treinamento pelo id',
     status_code=status.HTTP_200_OK,
     response_model=CentroTreinamentoOut,
 )
 async def get(id: UUID4, db_session: DatabaseDependency) -> CentroTreinamentoOut:
-    centro_treinamento_out: CentroTreinamentoOut = (
+    ct: CentroTreinamentoOut = (
         await db_session.execute(select(CentroTreinamentoModel).filter_by(id=id))
     ).scalars().first()
 
-    if not centro_treinamento_out:
+    if not ct:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, 
-            detail=f'Centro de treinamento não encontrado no id: {id}'
+            detail=f'Centro de Treinamento não encontrado no id: {id}'
         )
     
-    return centro_treinamento_out
+    return ct

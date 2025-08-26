@@ -3,7 +3,6 @@ from fastapi import APIRouter, Body, HTTPException, status
 from pydantic import UUID4
 from workout_api.categorias.schemas import CategoriaIn, CategoriaOut
 from workout_api.categorias.models import CategoriaModel
-
 from workout_api.contrib.dependencies import DatabaseDependency
 from sqlalchemy.future import select
 
@@ -27,7 +26,7 @@ async def post(
 
     return categoria_out
     
-    
+
 @router.get(
     '/', 
     summary='Consultar todas as Categorias',
@@ -58,3 +57,49 @@ async def get(id: UUID4, db_session: DatabaseDependency) -> CategoriaOut:
         )
     
     return categoria
+
+
+@router.put(
+    '/{id}',
+    summary='Atualizar uma Categoria pelo id',
+    status_code=status.HTTP_200_OK,
+    response_model=CategoriaOut,
+)
+async def put(id: UUID4, db_session: DatabaseDependency, categoria_in: CategoriaIn = Body(...)) -> CategoriaOut:
+    categoria_model = (
+        await db_session.execute(select(CategoriaModel).filter_by(id=id))
+    ).scalars().first()
+
+    if not categoria_model:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f'Categoria não encontrada no id: {id}'
+        )
+
+    categoria_model.nome = categoria_in.nome
+    categoria_model.descricao = categoria_in.descricao
+
+    await db_session.commit()
+    await db_session.refresh(categoria_model)
+
+    return CategoriaOut.model_validate(categoria_model)
+
+
+@router.delete(
+    '/{id}',
+    summary='Excluir uma Categoria pelo id',
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def delete(id: UUID4, db_session: DatabaseDependency) -> None:
+    categoria_model = (
+        await db_session.execute(select(CategoriaModel).filter_by(id=id))
+    ).scalars().first()
+
+    if not categoria_model:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f'Categoria não encontrada no id: {id}'
+        )
+
+    await db_session.delete(categoria_model)
+    await db_session.commit()

@@ -1,13 +1,12 @@
-from typing import Annotated
-
-from pydantic import UUID4, Field
-from workout_api.contrib.schemas import BaseSchema
+from pydantic import BaseModel, UUID4
 
 
-class CategoriaIn(BaseSchema):
-    nome: Annotated[str, Field(description='Nome da categoria', example='Scale', max_length=10)]
+class CategoriaIn(BaseModel):
+    nome: str
 
 
 class CategoriaOut(CategoriaIn):
-    id: Annotated[UUID4, Field(description='Identificador da categoria')]
+    id: UUID4
 
+    class Config:
+        from_attributes = True  # <-- Isso permite conversão do SQLAlchemy -> Pydantic
